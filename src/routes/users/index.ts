@@ -7,29 +7,26 @@ const getUsers: FastifyPluginAsync = async (
   fastify.get<{ Querystring: Partial<User> }>(
     "/",
     {
-      schema: {
+      schema: { // our api schema
         querystring: t.Object({
           id: t.Optional(t.Number()),
           name: t.Optional(t.String()),
           age: t.Optional(t.Number()),
           active: t.Optional(t.Boolean()),
-          last_login: t.Optional(
-            t.Unsafe<Date>({ type: "string", format: "date" })
-          ),
+          last_login: t.Optional(t.Unsafe<Date>({ type: "string", format: "date" })),
         }),
       },
     },
     async (request, reply) => {
       const users = await readUsers();
-      console.log("query", request.query);
       const filteredUsers = filterUsers(users, request.query);
       const sortedFilteredUsers = sortUsers(filteredUsers, "last_login");
-
-      return reply.send({ sortedFilteredUsers });
+      const userStats = userStatAggregator(sortedFilteredUsers);
+      return reply.send({ users: sortedFilteredUsers, stats: userStats });
     }
   );
 };
-// fastify functions do look kinda ugly tho... But ig one can get used to it and abstract a bit out.
+// fastify functions do look kinda ugly tho (callback hellish)... But ig one can get used to it and abstract a bit out.
 
 export default getUsers;
 
@@ -56,6 +53,16 @@ const sortUsers: (users: User[], sortBy: keyof User) => User[] = (
     return 0;
   });
 };
+
+const userStatAggregator = (users: User[]) => {
+    const reducer = (acc: { activeUsers: number; avgAge: number }, curr: User) => {
+        acc.activeUsers += curr.active ? 1 : 0;
+        acc.avgAge = (acc.avgAge * (users.length - 1) + (+curr.age)) / users.length;
+        return acc;
+    };
+    const aggregate = users.reduce(reducer, { activeUsers: 0, avgAge: 0 });
+    return aggregate
+}
 
 const readUsers = (): Promise<User[]> => {
   return new Promise((resolve, reject) => {
