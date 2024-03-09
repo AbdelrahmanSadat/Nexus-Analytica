@@ -37,7 +37,7 @@ The main api endpoint exposed is `/users`. It is a GET route that accepts query 
 For [example](http://localhost:3000/users?search_name=davi&active=true)
 
 ## Docker
-I created a dockerfile for the app. You either build the image and run the container, or run the app locally with Node 16+.
+I created a dockerfile for the app. You either build the image and run the container, or run the app locally with Node 18+.
 
 ## Developing the App
 This was my first time using Fastify for a backend framework. I choose so as a challenge to myself, and to learn something new while completing the task. And I'll definitely be looking more into it later.
