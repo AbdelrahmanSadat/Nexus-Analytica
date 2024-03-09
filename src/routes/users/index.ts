@@ -1,38 +1,25 @@
-import { Type as t } from "@fastify/type-provider-typebox";
+import { Static, Type as t } from "@fastify/type-provider-typebox";
 import { FastifyPluginAsync } from "fastify";
 import lunr from "lunr";
 
 const getUsers: FastifyPluginAsync = async (
   fastify // since we're using the type provider `FastifyPluginAsync` we don't need to declare argument/return/function types
 ) => {
-  fastify.get<{ Querystring: QueryString }>(
+  fastify.get<{ Querystring: UserQuery }>(
     "/",
     {
       schema: {
         // our api schema
-        querystring: t.Object({
-          id: t.Optional(t.Number()),
-          name: t.Optional(t.String()),
-          age: t.Optional(t.Number()),
-          active: t.Optional(t.Boolean()),
-          last_login: t.Optional(
-            t.Unsafe<Date>({ type: "string", format: "date" })
-          ),
-          search_name: t.Optional(t.String()),
-        }),
+        querystring: userQuery,
       },
     },
     async (request, reply) => {
       const users = await readUsers();
-      const {search_name: searchName, ...params} = request.query;
+      const { search_name: searchName, ...params } = request.query;
       const filteredUsers = filterUsers(users, params);
       let sortedFilteredUsers = sortUsers(filteredUsers, "last_login");
-      if (searchName) {
-        sortedFilteredUsers = searchByName(
-          sortedFilteredUsers,
-          searchName
-        );
-      }
+      if (searchName)
+        sortedFilteredUsers = searchByName(sortedFilteredUsers, searchName);
       const userStats = userStatAggregator(sortedFilteredUsers);
       return reply.send({ users: sortedFilteredUsers, stats: userStats });
     }
@@ -40,9 +27,6 @@ const getUsers: FastifyPluginAsync = async (
 };
 
 export default getUsers;
-
-
-
 
 // I opted to keep utility funcs and type definitions in the same file for simplicity's sake
 // =================================================================================================
@@ -113,15 +97,15 @@ const searchByName = (users: User[], searchWord: string) => {
   });
 
   // fuzzy matching degree can be customized
-  const searchResultIds = idx.search(`${searchWord}~2`).map((item) => +item.ref);
+  const searchResultIds = idx
+    .search(`${searchWord}~2`)
+    .map((item) => +item.ref);
 
   return users.filter((user) => searchResultIds.includes(+user.id));
 };
 
-
-
 // =================================================================================================
-// Types
+// Types & Validation Schemas
 // =================================================================================================
 
 interface User {
@@ -131,9 +115,15 @@ interface User {
   age: number | string;
   active: boolean;
   last_login: Date;
-  search_name: string;
 }
 
-interface QueryString extends Partial<User> {
-  search_name?: string;
-}
+const userQuery = t.Object({
+  id: t.Optional(t.Number()),
+  name: t.Optional(t.String()),
+  age: t.Optional(t.Number()),
+  active: t.Optional(t.Boolean()),
+  last_login: t.Optional(t.Unsafe<Date>({ type: "string", format: "date" })),
+  search_name: t.Optional(t.String()),
+});
+
+type UserQuery = Static<typeof userQuery>;
