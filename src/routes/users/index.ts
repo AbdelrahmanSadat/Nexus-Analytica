@@ -5,9 +5,7 @@ import lunr from "lunr";
 const getUsers: FastifyPluginAsync = async (
   fastify // since we're using the type provider `FastifyPluginAsync` we don't need to declare argument/return/function types
 ) => {
-  fastify.get<{ Querystring: UserQuery }>(
-    "/",
-    {
+  fastify.get<{ Querystring: UserQuery }>("/", {
       schema: {
         // our api schema
         querystring: userQuery,
