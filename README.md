@@ -39,6 +39,9 @@ For [example](http://localhost:3000/users?search_name=davi&active=true)
 ## Docker
 I created a dockerfile for the app. You can either build the image and run the container, or run the app locally with Node 18+.
 
+## Deployed Instance
+Check out the image deployed on [aws](http://16.171.168.135:3000/users)
+
 ## Developing the App
 This was my first time using Fastify for a backend framework. I choose so as a challenge to myself, and to learn something new while completing the task. And I'll definitely be looking more into it later.
 
